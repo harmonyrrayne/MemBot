@@ -200,9 +200,26 @@ Be helpful, conversational, and reference relevant memories when appropriate. If
       });
 
       res.json({ userMessage, aiMessage });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Chat error:", error);
-      res.status(500).json({ message: "Failed to process message" });
+      
+      // Handle OpenAI API errors specifically
+      if (error.status === 429 || error.code === 'insufficient_quota') {
+        res.status(400).json({ 
+          message: "OpenAI API quota exceeded. Please add a valid OpenAI API key in Settings.",
+          error: "missing_api_key"
+        });
+      } else if (error.status === 401) {
+        res.status(400).json({ 
+          message: "Invalid OpenAI API key. Please check your API key in Settings.",
+          error: "invalid_api_key"
+        });
+      } else {
+        res.status(500).json({ 
+          message: "Failed to process message. Please check your API keys in Settings.",
+          error: error.message || "unknown_error"
+        });
+      }
     }
   });
 
